@@ -1,5 +1,4 @@
 // https://developers.cloudflare.com/workers/examples/cache-using-fetch
-const JSZip = require('jszip')
 
 const CACHE_TTL = 3600
 const PATHS = {
@@ -30,13 +29,6 @@ async function handleRequest(request) {
       }
     })
 
-    const contentType = response.headers.get('Content-Type')
-    const contentLength = parseInt(response.headers.get('Content-Length'))
-
-    if (contentType == 'application/zip' && contentLength < 1000000) {
-      return await serveUnzipped(response)
-    }
-
     return response
   }
 
@@ -59,20 +51,6 @@ async function handleRequest(request) {
   }
   
   return new Response('no', {status: 404})
-}
-
-async function serveUnzipped(response) {
-  const blob = await response.blob()
-  const buffer = await blob.arrayBuffer()
-  const zip = await JSZip.loadAsync(buffer)
-
-  const files = zip.files
-  const fileName = Object.keys(files)[0]
-
-  const file = await zip.file(fileName)
-  const contents = await file.async('text')
-
-  return new Response(contents, {status: 200})
 }
 
 addEventListener('fetch', event => {
