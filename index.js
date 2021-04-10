@@ -1,12 +1,15 @@
 // https://developers.cloudflare.com/workers/examples/cache-using-fetch
 
 const CACHE_TTL = 3600
-const PATHS = {
+const BLACKLISTS = {
+  'urlhaus/all.csv.zip': "https://urlhaus.abuse.ch/downloads/csv/",
+  'urlhaus/30days.csv': "https://urlhaus.abuse.ch/downloads/csv_recent/",
   'urlhaus/online.csv': "https://urlhaus.abuse.ch/downloads/csv_online/",
   'urlhaus/payloads.csv.zip': "https://urlhaus.abuse.ch/downloads/payloads/",
-  'feodotracker.csv': "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",
-  'feodotracker/aggressive.csv': "https://feodotracker.abuse.ch/downloads/ipblocklist_aggressive.csv",
+  'feodotracker/all.csv': "https://feodotracker.abuse.ch/downloads/ipblocklist_aggressive.csv",
+  'feodotracker/30days.csv': "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",
   'threatfox/all.csv.zip': "https://threatfox.abuse.ch/export/csv/full/",
+  'threatfox/48hours.csv': "https://threatfox.abuse.ch/export/csv/recent/",
   'malwarebazaar/all.csv.zip': "https://bazaar.abuse.ch/export/csv/full/",
   'malwarebazaar/sha256.csv.zip': "https://bazaar.abuse.ch/export/txt/sha256/full/",
   'malwarebazaar/md5.csv.zip': "https://bazaar.abuse.ch/export/txt/md5/full/",
@@ -19,9 +22,9 @@ async function handleRequest(request) {
   let url = new URL(request.url)
   const path = url.pathname.substr(1)
 
-  if (path in PATHS) {
-    // Proxy request to abuse.ch
-    const resource = PATHS[path]
+  if (path in BLACKLISTS) {
+    // Proxy request to abuse.ch blacklist
+    const resource = BLACKLISTS[path]
     const response = await fetch(resource, {
       cf: {
         cacheTtl: CACHE_TTL,
@@ -37,7 +40,7 @@ async function handleRequest(request) {
     let banner = `<h1>abuse.ch exports</h1>
     <p>served by Cloudflare worker, 1 hour cache</p>
     <ul>`
-    for (item in PATHS) {
+    for (item in BLACKLISTS) {
       banner += '<li><a href="/' + item + '">' + item + '</a></li>'
     }
     banner += '</ul>'
